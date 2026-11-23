@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>🎄 圣诞快乐 · 专属祝福</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: radial-gradient(circle at 50% 20%, #162447 0%, #0b132b 55%, #050814 100%);
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+      color: #fff;
+      user-select: none;
+    }
+
+    canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      z-index: 1;
+    }
+
+    /* 顶部静音按钮 */
+    .music-btn {
+      position: fixed;
+      top: 18px;
+      right: 18px;
+      z-index: 20;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      background: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      color: #fde68a;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+    .music-btn:active {
+      transform: scale(0.92);
+    }
+
+    /* 初始拆开祝福按钮 */
+    .intro-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 15;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding-bottom: 12vh;
+      pointer-events: none;
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .intro-overlay.hidden {
+      opacity: 0;
+      transform: translateY(20px);
+      pointer-events: none;
+    }
+
+    .open-btn {
+      pointer-events: auto;
+      padding: 14px 28px;
+      border-radius: 999px;
+      border: 1px solid rgba(253, 224, 71, 0.6);
+      background: linear-gradient(135deg, rgba(185, 28, 28, 0.85), rgba(217, 119, 6, 0.85));
+      color: #fffbeb;
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      box-shadow: 0 0 25px rgba(251, 191, 36, 0.45);
+      cursor: pointer;
+      animation: pulseBtn 2.2s infinite ease-in-out;
+    }
+    .open-btn:active {
+      transform: scale(0.96);
+    }
+
+    .hint-text {
+      margin-top: 12px;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.65);
+      letter-spacing: 0.5px;
+    }
+
+    @keyframes pulseBtn {
+      0%, 100% { box-shadow: 0 0 18px rgba(251, 191, 36, 0.4); transform: scale(1); }
+      50% { box-shadow: 0 0 32px rgba(251, 191, 36, 0.75); transform: scale(1.03); }
+    }
+
+    /* 毛玻璃祝福贺卡 */
+    .card-wrap {
+      position: fixed;
+      left: 50%;
+      bottom: 84px;
+      transform: translate(-50%, 30px);
+      width: min(88vw, 380px);
+      z-index: 12;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .card-wrap.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+      pointer-events: auto;
+    }
+
+    .card {
+      padding: 20px 22px;
+      border-radius: 20px;
+      background: rgba(15, 23, 42, 0.42);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+      text-align: left;
+    }
+
+    .card-title {
+      font-size: 13px;
+      color: #fcd34d;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .card-to {
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 10px;
+    }
+
+    .card-msg {
+      font-size: 14px;
+      line-height: 1.75;
+      color: rgba(255, 255, 255, 0.9);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .card-from {
+      margin-top: 14px;
+      text-align: right;
+      font-size: 13px;
+      color: #fde68a;
+      font-weight: 500;
+    }
+
+    /* 底部定制按钮 */
+    .custom-bar {
+      position: fixed;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 14;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.6s ease;
+    }
+    .custom-bar.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .custom-btn {
+      padding: 10px 20px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      background: rgba(15, 23, 42, 0.55);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      color: #fff;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .custom-btn:active {
+      transform: scale(0.95);
+    }
+
+    /* 定制弹窗 */
+    .modal-mask {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      background: rgba(5, 8, 20, 0.72);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-mask.open {
+      display: flex;
+    }
+
+    .modal {
+      width: min(92vw, 380px);
+      background: #111c33;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    }
+    .modal h3 {
+      font-size: 16px;
+      margin-bottom: 14px;
+      color: #fde68a;
+    }
+    .field {
+      margin-bottom: 12px;
+    }
+    .field label {
+      display: block;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 5px;
+    }
+    .field input, .field textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.06);
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+    }
+    .field textarea {
+      resize: none;
+      height: 82px;
+      line-height: 1.5;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .btn-cancel, .btn-save {
+      flex: 1;
+      padding: 10px 0;
+      border-radius: 10px;
+      border: none;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-cancel {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+    }
+    .btn-save {
+      background: linear-gradient(135deg, #d97706, #dc2626);
+      color: #fff;
+    }
+
+    /* 轻提示 */
+    .toast {
+      position: fixed;
+      top: 72px;
+      left: 50%;
+      transform: translate(-50%, -10px);
+      z-index: 40;
+      padding: 9px 18px;
+      border-radius: 999px;
+      background: rgba(16, 185, 129, 0.92);
+      color: #fff;
+      font-size: 13px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+  </style>
+</head>
+<body>
+  <canvas id="scene"></canvas>
+
+  <button class="music-btn" id="musicBtn" title="开关音乐">🔇</button>
+
+  <div class="intro-overlay" id="introOverlay">
+    <button class="open-btn" id="openBtn">✨ 拆开你的圣诞祝福 ✨</button>
+    <div class="hint-text">左右滑动旋转圣诞树 · 轻点屏幕放烟花</div>
+  </div>
+
+  <div class="card-wrap" id="cardWrap">
+    <div class="card">
+      <div class="card-title">Merry Christmas</div>
+      <div class="card-to" id="cardTo">亲爱的朋友：</div>
+      <div class="card-msg" id="cardMsg">愿这个冬夜的每一片雪花，都带着温暖与好运落在你肩头。圣诞快乐，岁岁常欢愉，万事皆胜意！</div>
+      <div class="card-from" id="cardFrom">—— 你的朋友</div>
+    </div>
+  </div>
+
+  <div class="custom-bar" id="customBar">
+    <button class="custom-btn" id="customBtn">🎁 定制专属链接</button>
+  </div>
+
+  <div class="modal-mask" id="modalMask">
+    <div class="modal">
+      <h3>🎁 定制你的专属圣诞贺卡</h3>
+      <div class="field">
+        <label>收件人称呼</label>
+        <input type="text" id="inputTo" placeholder="例如：亲爱的小明" />
+      </div>
+      <div class="field">
+        <label>圣诞祝福语</label>
+        <textarea id="inputMsg" placeholder="写下你想说的话..."></textarea>
+      </div>
+      <div class="field">
+        <label>你的署名</label>
+        <input type="text" id="inputFrom" placeholder="例如：老王" />
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" id="btnCancel">取消</button>
+        <button class="btn-save" id="btnSave">生成并复制链接</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">已复制专属链接，快发给微信好友吧！</div>
+
+  <script>
+    // ==================== 1. URL 参数读写与定制 ====================
+    const params = new URLSearchParams(window.location.search);
+    const state = {
+      to: params.get('to') || '亲爱的朋友',
+      msg: params.get('msg') || '愿这个冬夜的每一片雪花，都带着温暖与好运落在你肩头。圣诞快乐，岁岁常欢愉，万事皆胜意！',
+      from: params.get('from') || '你的朋友'
+    };
+
+    const cardTo = document.getElementById('cardTo');
+    const cardMsg = document.getElementById('cardMsg');
+    const cardFrom = document.getElementById('cardFrom');
+    const toast = document.getElementById('toast');
+
+    function renderCard() {
+      cardTo.textContent = state.to.endsWith('：') || state.to.endsWith(':') ? state.to : state.to + '：';
+      cardMsg.textContent = state.msg;
+      cardFrom.textContent = '—— ' + state.from;
+    }
+    renderCard();
+
+    function showToast(text) {
+      toast.textContent = text;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2400);
+    }
+
+    // ==================== 2. Web Audio API 八音盒《Jingle Bells》 ====================
+    let audioCtx = null;
+    let isPlaying = false;
+    let musicTimer = null;
+    let noteIndex = 0;
+
+    // 音符频率表
+    const NOTE = {
+      C4: 261.63, D4: 293.66, E4: 329.63, F4: 349.23, G4: 392.00, A4: 440.00, B4: 493.88,
+      C5: 523.25, D5: 587.33, E5: 659.25, F5: 698.46, G5: 783.99
+    };
+
+    // 《Jingle Bells》主旋律 [音符, 拍数]
+    const melody = [
+      ['E5', 1], ['E5', 1], ['E5', 2],
+      ['E5', 1], ['E5', 1], ['E5', 2],
+      ['E5', 1], ['G5', 1], ['C5', 1.5], ['D5', 0.5], ['E5', 4],
+      ['F5', 1], ['F5', 1], ['F5', 1.5], ['F5', 0.5],
+      ['F5', 1], ['E5', 1], ['E5', 1], ['E5', 0.5], ['E5', 0.5],
+      ['E5', 1], ['D5', 1], ['D5', 1], ['E5', 1], ['D5', 2], ['G5', 2],
+      ['E5', 1], ['E5', 1], ['E5', 2],
+      ['E5', 1], ['E5', 1], ['E5', 2],
+      ['E5', 1], ['G5', 1], ['C5', 1.5], ['D5', 0.5], ['E5', 4],
+      ['F5', 1], ['F5', 1], ['F5', 1.5], ['F5', 0.5],
+      ['F5', 1], ['E5', 1], ['E5', 1], ['E5', 0.5], ['E5', 0.5],
+      ['G5', 1], ['G5', 1], ['F5', 1], ['D5', 1], ['C5', 4]
+    ];
+
+    function playBellTone(freq, duration) {
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const harmonic = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      const hGain = audioCtx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now);
+
+      harmonic.type = 'triangle';
+      harmonic.frequency.setValueAtTime(freq * 2, now);
+
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.exponentialRampToValueAtTime(0.16, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0008, now + duration * 1.4);
+
+      hGain.gain.setValueAtTime(0.001, now);
+      hGain.gain.exponentialRampToValueAtTime(0.04, now + 0.015);
+      hGain.gain.exponentialRampToValueAtTime(0.0005, now + duration * 0.9);
+
+      osc.connect(gain);
+      harmonic.connect(hGain);
+      gain.connect(audioCtx.destination);
+      hGain.connect(audioCtx.destination);
+
+      osc.start(now);
+      harmonic.start(now);
+      osc.stop(now + duration * 1.5);
+      harmonic.stop(now + duration * 1.5);
+    }
+
+    function scheduleNextNote() {
+      if (!isPlaying) return;
+      const [note, beats] = melody[noteIndex];
+      const beatMs = 260;
+      const durSec = (beats * beatMs) / 1000;
+      if (NOTE[note]) playBellTone(NOTE[note], durSec);
+      noteIndex = (noteIndex + 1) % melody.length;
+      musicTimer = setTimeout(scheduleNextNote, beats * beatMs);
+    }
+
+    const musicBtn = document.getElementById('musicBtn');
+    function startMusic() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+      }
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      if (!isPlaying) {
+        isPlaying = true;
+        musicBtn.textContent = '🔊';
+        scheduleNextNote();
+      }
+    }
+
+    function toggleMusic() {
+      if (!isPlaying) {
+        startMusic();
+      } else {
+        isPlaying = false;
+        clearTimeout(musicTimer);
+        musicBtn.textContent = '🔇';
+      }
+    }
+    musicBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleMusic();
+    });
+
+    // ==================== 3. 3D 粒子圣诞树 + 雪花 + 烟花 ====================
+    const canvas = document.getElementById('scene');
+    const ctx = canvas.getContext('2d');
+    let W = window.innerWidth;
+    let H = window.innerHeight;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    function resize() {
+      W = window.innerWidth;
+      H = window.innerHeight;
+      canvas.width = W * dpr;
+      canvas.height = H * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    // 星空
+    const stars = Array.from({ length: 75 }, () => ({
+      x: Math.random() * W,
+      y: Math.random() * H * 0.75,
+      r: Math.random() * 1.5 + 0.4,
+      phase: Math.random() * Math.PI * 2,
+      speed: Math.random() * 0.03 + 0.01
+    }));
+
+    // 分层飘雪
+    const snowflakes = Array.from({ length: 90 }, () => ({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: Math.random() * 2.4 + 0.8,
+      vy: Math.random() * 1.1 + 0.4,
+      vx: Math.random() * 0.6 - 0.3,
+      alpha: Math.random() * 0.6 + 0.25
+    }));
+
+    // 3D 圣诞树粒子
+    const treeParticles = [];
+    const TREE_COUNT = 520;
+    const palette = [
+      '#10b981', '#10b981', '#059669', '#34d399', // 翡翠绿
+      '#fbbf24', '#fde68a',                       // 鎏金
+      '#ef4444', '#fffbeb'                        // 绯红与暖白
+    ];
+
+    for (let i = 0; i < TREE_COUNT; i++) {
+      const t = i / TREE_COUNT; // 0(树顶) -> 1(树底)
+      const angle = t * Math.PI * 18 + (Math.random() - 0.5) * 0.45;
+      const radius = t * Math.min(W, H) * 0.24 * (0.85 + Math.random() * 0.3);
+      const y = (t - 0.5) * Math.min(H * 0.52, 360);
+      treeParticles.push({
+        angle,
+        radius,
+        y,
+        size: (1 - t * 0.35) * (Math.random() * 2.2 + 1.4),
+        color: palette[Math.floor(Math.random() * palette.length)],
+        twinkle: Math.random() * Math.PI * 2
+      });
+    }
+
+    // 指尖烟花粒子
+    const fireworks = [];
+    function spawnFirework(x, y) {
+      const colors = ['#fbbf24', '#fde68a', '#ef4444', '#f97316', '#fffbeb'];
+      for (let i = 0; i < 28; i++) {
+        const ang = (Math.PI * 2 * i) / 28 + Math.random() * 0.2;
+        const speed = Math.random() * 3.8 + 1.4;
+        fireworks.push({
+          x, y,
+          vx: Math.cos(ang) * speed,
+          vy: Math.sin(ang) * speed,
+          life: 1,
+          decay: Math.random() * 0.02 + 0.015,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          size: Math.random() * 2.5 + 1.5
+        });
+      }
+    }
+
+    // 绘制树顶五角星
+    function drawStar(cx, cy, outerR, innerR, glow) {
+      ctx.save();
+      ctx.beginPath();
+      for (let i = 0; i < 10; i++) {
+        const r = i % 2 === 0 ? outerR : innerR;
+        const a = (Math.PI / 5) * i - Math.PI / 2;
+        const x = cx + Math.cos(a) * r;
+        const y = cy + Math.sin(a) * r;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.shadowColor = '#fbbf24';
+      ctx.shadowBlur = 18 + glow * 12;
+      ctx.fillStyle = '#fef08a';
+      ctx.fill();
+      ctx.restore();
+    }
+
+    let rotY = 0;
+    let rotSpeed = 0.008;
+    let isDragging = false;
+    let lastX = 0;
+    let time = 0;
+
+    function animate() {
+      time += 0.03;
+      ctx.clearRect(0, 0, W, H);
+
+      // 1. 星空
+      for (const s of stars) {
+        s.phase += s.speed;
+        const a = 0.25 + 0.65 * Math.abs(Math.sin(s.phase));
+        ctx.fillStyle = `rgba(255, 255, 255, ${a})`;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // 2. 3D 圣诞树
+      const centerX = W / 2;
+      const centerY = H * 0.41;
+      const fov = 420;
+
+      if (!isDragging) {
+        rotSpeed += (0.008 - rotSpeed) * 0.03;
+      }
+      rotY += rotSpeed;
+
+      const projected = treeParticles.map((p) => {
+        const a = p.angle + rotY;
+        const x3d = Math.cos(a) * p.radius;
+        const z3d = Math.sin(a) * p.radius;
+        const scale = fov / (fov + z3d + 160);
+        return {
+          x: centerX + x3d * scale,
+          y: centerY + p.y * scale,
+          z: z3d,
+          r: p.size * scale,
+          color: p.color,
+          twinkle: p.twinkle
+        };
+      });
+
+      projected.sort((a, b) => b.z - a.z);
+
+      for (const p of projected) {
+        const alpha = 0.55 + 0.45 * Math.sin(time * 2 + p.twinkle);
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, Math.max(0.6, p.r), 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+
+      // 树顶五角星
+      const treeTopY = centerY - Math.min(H * 0.52, 360) * 0.5 - 12;
+      drawStar(centerX, treeTopY, 13, 5.5, Math.sin(time * 2.5));
+
+      // 3. 雪花
+      for (const f of snowflakes) {
+        f.y += f.vy;
+        f.x += f.vx + Math.sin(time + f.y * 0.01) * 0.3;
+        if (f.y > H) { f.y = -5; f.x = Math.random() * W; }
+        if (f.x > W) f.x = 0;
+        if (f.x < 0) f.x = W;
+        ctx.fillStyle = `rgba(255, 255, 255, ${f.alpha})`;
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // 4. 烟花
+      for (let i = fireworks.length - 1; i >= 0; i--) {
+        const fw = fireworks[i];
+        fw.x += fw.vx;
+        fw.y += fw.vy;
+        fw.vy += 0.06; // 重力
+        fw.life -= fw.decay;
+        if (fw.life <= 0) {
+          fireworks.splice(i, 1);
+          continue;
+        }
+        ctx.globalAlpha = fw.life;
+        ctx.fillStyle = fw.color;
+        ctx.beginPath();
+        ctx.arc(fw.x, fw.y, fw.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+
+      requestAnimationFrame(animate);
+    }
+    animate();
+
+    // ==================== 4. 触摸与鼠标交互 ====================
+    let downX = 0, downY = 0;
+    function onStart(x, y) {
+      isDragging = true;
+      lastX = x;
+      downX = x;
+      downY = y;
+    }
+    function onMove(x) {
+      if (!isDragging) return;
+      const dx = x - lastX;
+      rotSpeed = dx * 0.008;
+      lastX = x;
+    }
+    function onEnd(x, y) {
+      if (isDragging && Math.hypot(x - downX, y - downY) < 10) {
+        spawnFirework(x, y);
+      }
+      isDragging = false;
+    }
+
+    canvas.addEventListener('mousedown', (e) => onStart(e.clientX, e.clientY));
+    window.addEventListener('mousemove', (e) => onMove(e.clientX));
+    window.addEventListener('mouseup', (e) => onEnd(e.clientX, e.clientY));
+
+    canvas.addEventListener('touchstart', (e) => {
+      const t = e.touches[0];
+      onStart(t.clientX, t.clientY);
+    }, { passive: true });
+    canvas.addEventListener('touchmove', (e) => {
+      onMove(e.touches[0].clientX);
+    }, { passive: true });
+    canvas.addEventListener('touchend', (e) => {
+      const t = e.changedTouches[0];
+      onEnd(t.clientX, t.clientY);
+    });
+
+    // ==================== 5. 拆开祝福 & 定制弹窗 ====================
+    const openBtn = document.getElementById('openBtn');
+    const introOverlay = document.getElementById('introOverlay');
+    const cardWrap = document.getElementById('cardWrap');
+    const customBar = document.getElementById('customBar');
+
+    openBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      startMusic();
+      spawnFirework(W * 0.3, H * 0.32);
+      spawnFirework(W * 0.7, H * 0.28);
+      introOverlay.classList.add('hidden');
+      setTimeout(() => {
+        cardWrap.classList.add('show');
+        customBar.classList.add('show');
+      }, 280);
+    });
+
+    const modalMask = document.getElementById('modalMask');
+    const customBtn = document.getElementById('customBtn');
+    const btnCancel = document.getElementById('btnCancel');
+    const btnSave = document.getElementById('btnSave');
+    const inputTo = document.getElementById('inputTo');
+    const inputMsg = document.getElementById('inputMsg');
+    const inputFrom = document.getElementById('inputFrom');
+
+    customBtn.addEventListener('click', () => {
+      inputTo.value = state.to;
+      inputMsg.value = state.msg;
+      inputFrom.value = state.from;
+      modalMask.classList.add('open');
+    });
+
+    btnCancel.addEventListener('click', () => modalMask.classList.remove('open'));
+    modalMask.addEventListener('click', (e) => {
+      if (e.target === modalMask) modalMask.classList.remove('open');
+    });
+
+    btnSave.addEventListener('click', () => {
+      state.to = inputTo.value.trim() || '亲爱的朋友';
+      state.msg = inputMsg.value.trim() || '圣诞快乐，愿你平安喜乐！';
+      state.from = inputFrom.value.trim() || '你的朋友';
+      renderCard();
+
+      const newParams = new URLSearchParams({
+        to: state.to,
+        msg: state.msg,
+        from: state.from
+      });
+      const shareUrl = `${window.location.origin}${window.location.pathname}?${newParams.toString()}`;
+      window.history.replaceState(null, '', `?${newParams.toString()}`);
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(shareUrl)
+          .then(() => showToast('已复制专属链接，快发给微信好友吧！'))
+          .catch(() => showToast('贺卡已更新，请直接复制浏览器地址栏链接'));
+      } else {
+        showToast('贺卡已更新，请直接复制浏览器地址栏链接');
+      }
+      modalMask.classList.remove('open');
+    });
+  </script>
+</body>
+</html>
